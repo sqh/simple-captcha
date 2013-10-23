@@ -3,7 +3,7 @@ module SimpleCaptcha #:nodoc
     def self.included(base)
       base.extend(SingletonMethods)
     end
-    
+
     # To implement model based simple captcha use this method in the model as...
     #
     #  class User < ActiveRecord::Base
@@ -30,29 +30,29 @@ module SimpleCaptcha #:nodoc
     #  @user.save                # when captcha validation is not required.
     module SingletonMethods
       def apply_simple_captcha(options = {})
-        options = { :add_to_base => false }.merge(options)
-                  
+        options = {:add_to_base => false}.merge(options)
+
         class_attribute :simple_captcha_options
         self.simple_captcha_options = options
-        
+
         unless self.is_a?(ClassMethods)
           include InstanceMethods
           extend ClassMethods
-          
+
           attr_accessor :captcha, :captcha_key
         end
       end
     end
-    
+
     module ClassMethods
     end
-    
+
     module InstanceMethods
-    
+
       def valid_with_captcha?
         [valid?, is_captcha_valid?].all?
       end
-      
+
       def is_captcha_valid?
         return true if Rails.env.test?
 
@@ -60,12 +60,12 @@ module SimpleCaptcha #:nodoc
           SimpleCaptcha::Utils::simple_captcha_passed!(captcha_key)
           return true
         else
-          message = simple_captcha_options[:message] || I18n.t(self.class.model_name.downcase, :scope => [:simple_captcha, :message], :default => :default)
+          message = simple_captcha_options[:message] || I18n.t(self.class.model_name.to_s.underscore, :scope => [:simple_captcha, :message], :default => :default)
           simple_captcha_options[:add_to_base] ? errors.add(:base, message) : errors.add(:captcha, message)
           return false
         end
       end
-      
+
       def save_with_captcha
         valid_with_captcha? && save(:validate => false)
       end
